@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHIB PROFIT | Pro UI</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+/* --- إضافات أيقونة الإشعارات ونافذة الإشعارات --- */
+.notif-btn {
+    position: relative;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--gold);
+    transition: 0.3s;
+}
+.notif-btn:active { transform: scale(0.8); }
+
+.notif-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #ff4d4d;
+    border-radius: 50%;
+    border: 1px solid var(--bg);
+}
+
+/* Modal الإشعارات */
+#notif-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none; /* مخفي افتراضياً */
+    justify-content: center;
+    align-items: center;
+}
+
+.notif-content {
+    width: 90%;
+    max-width: 400px;
+    background: var(--bg);
+    border: 1px solid var(--stroke);
+    border-radius: 20px;
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--stroke);
+    padding-bottom: 10px;
+}
+
+.notif-item {
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--card);
+    margin-bottom: 10px;
+    border-right: 3px solid var(--gold);
+}
+.notif-item small { color: #888; font-size: 10px; }
+
+/* ------------------------------------------- */
+
+/* Slider Style */
+.slider {
+    width: 100%; height: 120px; border-radius: 18px;
+    background: linear-gradient(45deg, #1a1a2e, #16213e);
+    margin-bottom: 20px; position: relative; overflow: hidden;
+    display: flex; align-items: center; padding: 20px; border: 1px solid var(--stroke);
+}
+.slider-content h4 { color: var(--gold); margin-bottom: 5px; }
+.slider-content p { font-size: 12px; color: #ccc; }
+
+.quick-actions { display: flex; justify-content: space-between; margin-bottom: 20px; gap: 10px; }
+.action-btn { flex: 1; background: var(--card); padding: 15px 5px; border-radius: 15px; text-align: center; font-size: 12px; border: 1px solid var(--stroke); transition: 0.3s; }
+.action-btn i { display: block; font-size: 20px; color: var(--gold); margin-bottom: 8px; }
+
+.coin-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--stroke); }
+.price-up { color: #00ff88; font-weight: bold; }
+.price-down { color: #ff4d4d; font-weight: bold; }
+
+.fab-telegram { position: fixed; bottom: 85px; left: 20px; width: 55px; height: 55px; background: linear-gradient(135deg, #24A1DE, #1d86b9); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 999; animation: pulse-gold 2s infinite; text-decoration: none; }
+
+@keyframes pulse-gold { 0% { box-shadow: 0 0 0 0 rgba(36, 161, 222, 0.4); } 70% { box-shadow: 0 0 0 15px rgba(36, 161, 222, 0); } 100% { box-shadow: 0 0 0 0 rgba(36, 161, 222, 0); } }
+
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+:root{ --gold:#f3ba2f; --bg:#070A12; --card:rgba(255,255,255,0.05); --stroke:rgba(255,255,255,0.08); --text:#fff; }
+*{ margin:0; padding:0; font-family:'Cairo',sans-serif; box-sizing:border-box; }
+body{ background: radial-gradient(circle at top, #111a33, var(--bg)); color:var(--text); padding-bottom:90px; overflow-x: hidden; }
+
+#toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 350px; }
+.toast { background: rgba(20, 20, 30, 0.85); backdrop-filter: blur(15px); border: 1px solid var(--gold); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; animation: slideDown 0.4s ease; transition: 0.3s; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+.toast.hide { opacity: 0; transform: translateY(-20px); }
+
+header{ display:flex; justify-content:space-between; align-items:center; padding:15px 5%; position:sticky; top:0; backdrop-filter:blur(15px); background:rgba(0,0,0,0.3); border-bottom:1px solid var(--stroke); z-index: 100; }
+.logo{ font-weight:900; color:var(--gold); }
+
+.page{ display:none; padding:20px 5%; animation:fade .3s ease; }
+.page.active{ display:block; }
+@keyframes fade{ from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+.card{ background:var(--card); border:1px solid var(--stroke); border-radius:18px; padding:18px; backdrop-filter:blur(10px); margin-bottom:15px; }
+input{ width:100%; padding:14px; border-radius:12px; border:1px solid var(--stroke); background:rgba(0,0,0,0.3); color:#fff; outline: none; }
+button{ width:100%; padding:14px; border:none; border-radius:14px; background:linear-gradient(135deg,var(--gold),#ffdd66); font-weight:900; cursor:pointer; }
+nav{ position:fixed; bottom:0; width:100%; display:flex; background:rgba(10,10,20,0.6); backdrop-filter:blur(18px); border-top:1px solid rgba(255,255,255,0.08); padding:8px 0; z-index: 100; }
+.nav{ flex:1; text-align:center; color:#888; font-size:11px; cursor:pointer; position:relative; transition:.3s; }
+.nav i{ display:block; font-size:18px; margin-bottom:3px; }
+.nav.active{ color:#f3ba2f; transform:translateY(-3px); }
+</style>
+</head>
+<body>
+
+<div id="notif-modal" onclick="closeNotif()">
+    <div class="notif-content" onclick="event.stopPropagation()">
+        <div class="notif-header">
+            <h3><i class="fas fa-bell"></i> الإشعارات</h3>
+            <i class="fas fa-times" onclick="closeNotif()" style="cursor:pointer; color:#888;"></i>
+        </div>
+        
+        <div id="notif-list">
+            <div class="notif-item">
+                <small>اليوم • 10:30 م</small>
+                <p>مرحباً بك في <b>SHIB PROFIT</b>! ابدأ بالدعوة الآن وضاعف أرباحك.</p>
+            </div>
+            <div class="notif-item" style="border-right-color: #24A1DE;">
+                <small>أمس • 09:15 ص</small>
+                <p>تم تحديث نظام السحوبات لتصبح فورية عبر شبكة BEP20. 🚀</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="https://t.me/suui_7" target="_blank" class="fab-telegram">
+    <i class="fab fa-telegram-plane"></i>
+</a>
+
+<div id="toast-container"></div>
+
+<header>
+    <div class="logo">SHIB PROFIT</div>
+    
+    <div class="notif-btn" onclick="openNotif()">
+        <i class="fas fa-bell"></i>
+        <div class="notif-dot" id="notif-dot"></div>
+    </div>
+</header>
+
+<div id="home" class="page active">
+    <div class="slider">
+        <div class="slider-content">
+            <h4>عرض جديد</h4>
+            <p>ضاعف أرباحك عند دعوة 5 أصدقاء اليوم!</p>
+            <small style="color: var(--gold); font-size: 10px;">ينتهي خلال: 3 يوم </small>
+        </div>
+        <i class="fas fa-gift" style="position:absolute; left:20px; font-size:50px; color:rgba(243,186,47,0.2);"></i>
+    </div>
+
+    <div class="quick-actions">
+        <div class="action-btn" onclick="notify('قريباً: ميزة الإيداع', 'fa-arrow-down')">
+            <i class="fas fa-arrow-down"></i> إيداع
+        </div>
+        <div class="action-btn" onclick="go('withdraw', document.querySelectorAll('.nav')[2])">
+            <i class="fas fa-paper-plane"></i> سحب
+        </div>
+        <div class="action-btn" onclick="go('withdraw', document.querySelectorAll('.nav')[2])">
+            <i class="fas fa-history"></i> سجل
+        </div>
+        <div class="action-btn" onclick="go('ref', document.querySelectorAll('.nav')[1])">
+            <i class="fas fa-user-plus"></i> دعوة
+        </div>
+    </div>
+
+    <div class="card" style="background: linear-gradient(135deg, rgba(243,186,47,0.1) 0%, rgba(7,10,18,1) 100%); border-left: 4px solid var(--gold);">
+        <h4 style="color:#888;">إجمالي الرصيد</h4>
+        <div style="font-size:32px; font-weight:900; margin:10px 0;">$0.00</div>
+        <div style="display:flex; gap:10px; font-size:13px;">
+            <span class="price-up"><i class="fas fa-caret-up"></i> +0%</span>
+            <span style="color:#888;">آخر 24 ساعة</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom:15px; font-size:16px;"> مراقبة السوق</h3>
+        <div class="coin-item">
+            <div style="display:flex; gap:12px; align-items:center;">
+                <img src="https://cryptologos.cc/logos/shib-inu-shib-logo.png" width="30">
+                <div><div>SHIB</div><small style="color:#666;">Shib Inu</small></div>
+            </div>
+            <div style="text-align:left;"><div>0.0000274</div><div class="price-up" style="font-size:12px;">+2.45%</div></div>
+        </div>
+    </div>
+</div>
+
+    <div id="tasks" class="page">
+    <div class="card" style="text-align:center; background:linear-gradient(135deg, rgba(243,186,47,0.1), transparent); border-bottom: 2px solid var(--gold);">
+        <i class="fas fa-coins" style="font-size:40px; color:var(--gold); margin-bottom:10px;"></i>
+        <h2>مركز المهام</h2>
+        <p style="color:#aaa; font-size:12px;">أكمل المهام البسيطة لزيادة رصيدك</p>
+    </div>
+
+    <div class="card task-card" id="task_tg_1">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div style="width:45px; height:45px; border-radius:12px; background:rgba(36, 161, 222, 0.1); display:flex; align-items:center; justify-content:center;">
+                    <i class="fab fa-telegram-plane" style="color:#24A1DE; font-size:20px;"></i>
+                </div>
+                <div>
+                    <span style="font-weight:bold; display:block; font-size:14px;">انضم لقناتي </span>
+                    <small style="color:var(--gold); font-weight:900;">+250 SHIB</small> </div>
+            </div>
+            <button onclick="startTask('https://t.me/RR99PP', 'task_tg_1', 250)" style="width:80px; padding:8px; font-size:12px;">إكمال</button>
+        </div>
+    </div>
+
+    <div class="card task-card" id="task_tg_3">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div style="width:45px; height:45px; border-radius:12px; background:rgba(36, 161, 222, 0.1); display:flex; align-items:center; justify-content:center;">
+                    <i class="fab fa-telegram-plane" style="color:#24A1DE; font-size:20px;"></i>
+                </div>
+                <div>
+                <span style="font-weight:bold; display:block; font-size:14px;">انضم لقناتي </span>
+                    <small style="color:var(--gold); font-weight:900;">+250 SHIB</small> </div>
+            </div>
+            <button onclick="startTask('https://t.me/asmat123567', 'task_tg_3', 250)" style="width:80px; padding:8px; font-size:12px;">إكمال</button>
+        </div>
+    </div>
+
+    <div class="card task-card" id="task_tg_2">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div style="width:45px; height:45px; border-radius:12px; background:rgba(36, 161, 222, 0.1); display:flex; align-items:center; justify-content:center;">
+                    <i class="fab fa-telegram-plane" style="color:#24A1DE; font-size:20px;"></i>
+                </div>
+                <div>
+                    <span style="font-weight:bold; display:block; font-size:14px;">انضم لقناتي</span>
+                    <small style="color:var(--gold); font-weight:900;">+250 SHIB</small> </div>
+            </div>
+            <button onclick="startTask('https://t.me/Cristiano_Ronaldo_sui_7', 'task_tg_2', 250)" style="width:80px; padding:8px; font-size:12px;">إكمال</button>
+        </div>
+    </div>
+
+    
+    <p style="text-align:center; color:#444; font-size:11px;">يتم تحديث المهام تلقائياً كل 24 ساعة</p>
+</div>
+
+
+<div id="withdraw" class="page">
+    <div class="card">
+        <h3 style="margin-bottom: 20px; text-align: center;">سحب الأرباح (SHIB)</h3>
+        
+        <div style="background: rgba(243, 186, 47, 0.1); border: 1px solid var(--gold); border-radius: 15px; padding: 15px; text-align: center; margin-bottom: 20px;">
+            <i class="fas fa-shield-alt" style="color: var(--gold); font-size: 20px; margin-bottom: 8px; display: block;"></i>
+            <span style="font-weight: 900; color: var(--gold); font-size: 14px;">شبكة السحب المتاحة: USDT BEP20</span>
+        </div>
+
+        <div style="position:relative; margin-bottom:15px;">
+            <i class="fas fa-wallet" style="position:absolute; left:15px; top:18px; color:var(--gold);"></i>
+            <input id="w_address" placeholder="ادخل عنوان محفظة BEP20 الخاص بك" style="padding-left:40px; height: 55px; border-radius: 15px;">
+        </div>
+
+        <div style="position:relative; margin-bottom:25px;">
+            <i class="fas fa-coins" style="position:absolute; left:15px; top:18px; color:var(--gold);"></i>
+            <input type="number" id="w_amount" placeholder="ادخل مبلغ السحب ($)" style="padding-left:40px; height: 55px; border-radius: 15px;">
+        </div>
+
+        <button onclick="executeWithdraw()" style="height: 55px; font-size: 16px;">تأكيد السحب</button>
+        
+        <p style="text-align: center; color: #666; font-size: 11px; margin-top: 15px;">
+            * يرجى التأكد من أن العنوان يدعم شبكة <b>Binance Smart Chain</b>
+        </p>
+    </div>
+
+    <div class="card">
+        <h4 style="font-size:14px; margin-bottom:15px;"><i class="fas fa-history" style="color:var(--gold); margin-left:8px;"></i>سجل السحوبات</h4>
+        <div id="w_logs">
+            <p style="text-align:center; color:#444; padding:20px;">لا توجد طلبات سحب سابقة</p>
+        </div>
+    </div>
+</div>
+
+
+
+<div id="ref" class="page">
+    <div class="card" style="text-align:center; background:linear-gradient(135deg, rgba(243,186,47,0.15), rgba(255,255,255,0.02)); border-bottom: 2px solid var(--gold);">
+        <i class="fas fa-users-cog" style="font-size:40px; color:var(--gold); margin-bottom:10px;"></i>
+        <h2>نظام الإحالة</h2>
+        <p style="color:#aaa; font-size:13px;">شارك الرابط مع أصدقائك واحصل على 250 SHIB.</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+        <div class="card" style="text-align:center; padding:15px;">
+            <h4 style="color:#888; font-size:12px;">إجمالي الإحالات</h4>
+            <p style="font-size:22px; color:var(--gold); font-weight:900;">0</p>
+        </div>
+        <div class="card" style="text-align:center; padding:15px;">
+            <h4 style="color:#888; font-size:12px;">أرباح الإحالة</h4>
+            <p style="font-size:22px; color:#00ff88; font-weight:900;">0.00$</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="font-size:15px; margin-bottom:12px;"><i class="fas fa-gift"></i> رابط الدعوة الخاص بك</h3>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input id="refCode" value="https://t.me/SHIBProfitbot?start=..." readonly style="text-align:center; border-style:dashed; font-size: 11px;">
+
+            <button onclick="copyCode()" style="width:80px; padding:12px 0;">نسخ</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="font-size:15px; margin-bottom:15px;">كيف يعمل النظام؟</h3>
+        
+        <div style="display:flex; gap:15px; align-items:center; margin-bottom:12px;">
+            <div style="width:30px; height:30px; border-radius:50%; background:var(--gold); color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold;">1</div>
+            <p style="font-size:13px; color:#ccc;">انسخ رابط الدعوة الخاص بك وشاركه مع الأصدقاء.</p>
+        </div>
+
+        <div style="display:flex; gap:15px; align-items:center; margin-bottom:12px;">
+            <div style="width:30px; height:30px; border-radius:50%; background:var(--gold); color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold;">2</div>
+            <p style="font-size:13px; color:#ccc;">عند قيام صديقك بالتسجيل، يتم ربطه بحسابك تلقائياً.</p>
+        </div>
+
+        <div style="display:flex; gap:15px; align-items:center;">
+            <div style="width:30px; height:30px; border-radius:50%; background:#00ff88; color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold;">3</div>
+            <p style="font-size:13px; color:#ccc;">تحصل على 10% عمولة عن كل عملية سحب يقوم بها أصدقاؤك!</p>
+        </div>
+    </div>
+</div>
+
+
+<div id="profile" class="page">
+    
+    <div class="card" style="text-align:center; padding:35px 20px; background: linear-gradient(145deg, rgba(243,186,47,0.15) 0%, rgba(7,10,18,1) 100%); border: 1px solid var(--gold); border-radius: 25px;">
+        
+        <div style="position:relative; display:inline-block;">
+            <div id="avatar" style="width:95px; height:95px; border-radius:50%; border:3px solid var(--gold); padding:4px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--bg);">
+                <i class="fas fa-user" style="font-size:40px; color:#333;"></i>
+            </div>
+            
+            <div style="position:absolute; bottom:5px; right:5px; background:var(--gold); width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid var(--bg);">
+                <i class="fas fa-check" style="font-size:10px; color:#000;"></i>
+            </div>
+        </div>
+
+        <h2 id="p_name" style="color:var(--text); margin-top:15px; font-weight:900; letter-spacing:1px;">تحميل...</h2>
+        <p id="p_username" style="color:var(--gold); font-size:12px; font-weight:bold; margin-top:5px;">@suui_7</p>
+        <small id="p_id" style="color:#444; font-size:10px; display:block; margin-top:5px;">ID: 00000000</small>
+
+        <div style="margin-top:20px; display:flex; justify-content:center; gap:20px; border-top:1px solid var(--stroke); padding-top:20px;">
+            <div><small style="color:#666; display:block; font-size:10px;">إجمالي السحب</small><b style="color:#fff;">$0.00</b></div>
+            <div style="width:1px; background:var(--stroke); height:30px;"></div>
+            <div><small style="color:#666; display:block; font-size:10px;">رصيد متاح</small><b style="color:var(--gold);">$0.00</b></div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:10px; border-radius:20px; margin-top:20px;">
+        <div class="method" style="display:flex; align-items:center; justify-content:space-between; padding:15px; border:none; border-bottom:1px solid var(--stroke);" onclick="notify('لترقية حسابك اجمع 20 دعوة', 'fa-chart-line')">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div style="width:40px; height:40px; border-radius:12px; background:rgba(243,186,47,0.1); display:flex; align-items:center; justify-content:center;"><i class="fas fa-chart-line" style="color:var(--gold);"></i></div>
+                <div><span style="font-weight:bold; display:block;">مستويات الربح</span><small style="color:#555; font-size:10px;">كلما زاد نشاطك زادت مرتبتك</small></div>
+            </div>
+            <div style="background:var(--gold); color:#000; padding:2px 8px; border-radius:8px; font-size:10px; font-weight:900;">LVL 1</div>
+        </div>
+        <div class="method" style="display:flex; align-items:center; justify-content:space-between; padding:15px; border:none;" onclick="window.open('https://t.me/suui_7', '_blank')">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div style="width:40px; height:40px; border-radius:12px; background:rgba(36, 161, 222, 0.1); display:flex; align-items:center; justify-content:center;"><i class="fab fa-telegram-plane" style="color:#24A1DE;"></i></div>
+                <div><span style="font-weight:bold; display:block;">مركز الدعم المباشر</span><small style="color:#555; font-size:10px;">تواصل مع فريق الدعم </small></div>
+            </div>
+            <i class="fas fa-external-link-alt" style="color:#333; font-size:12px;"></i>
+        </div>
+    </div>
+
+    <script>
+        function initTelegram() {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    const user = tg.initDataUnsafe?.user || {};
+
+    // --- الجزء الخاص بسحب البيانات (زي ما هو) ---
+    if(user.first_name) {
+        document.getElementById('p_name').innerText = user.first_name + (user.last_name ? " " + user.last_name : "");
+    }
+    document.getElementById('p_username').innerText = user.username ? "@" + user.username : "@user_pro";
+    document.getElementById('p_id').innerText = "ID: " + (user.id || "00000000");
+
+    // --- الجزء الجديد الخاص برابط الدعوة ---
+    if(user.id) {
+        // هنا بنركب الأيدي بتاع المستخدم في نهاية رابط البوت
+        const inviteLink = `https://t.me/SHIBProfitbot?start=${user.id}`;
+        document.getElementById('refCode').value = inviteLink;
+    }
+
+    // تحديث الصورة (زي ما هي)
+    const avatarDiv = document.getElementById('avatar');
+    if (user.photo_url) {
+        avatarDiv.innerHTML = `<img src="${user.photo_url}" style="width:100%; height:100%; object-fit:cover;">`;
+    } else {
+        const letter = (user.first_name || "W").charAt(0).toUpperCase();
+        avatarDiv.innerHTML = `<span style="font-size:35px; font-weight:900; color:var(--gold);">${letter}</span>`;
+    }
+}
+
+
+// 6. تشغيل الدالة فور تحميل النافذة
+window.onload = function() {
+    initTelegram();
+};
+function doTask(url, taskId, reward) {
+    // 1. فتح رابط المهمة في صفحة جديدة
+    window.open(url, '_blank');
+
+    // 2. تغيير حالة الزر لـ "تحقق"
+    const taskDiv = document.getElementById(taskId);
+    const btn = taskDiv.querySelector('button');
+    btn.innerText = "جاري التحقق...";
+    btn.style.background = "#555";
+    btn.disabled = true;
+
+    // 3. محاكاة التحقق (في السيستم الحقيقي الربط يكون مع البوت)
+    setTimeout(() => {
+        btn.innerText = "تمت بنجاح ✅";
+        btn.style.background = "linear-gradient(135deg, #00ff88, #00cc6a)";
+        notify(`مبروك! حصلت على ${reward} SHIB`, 'fa-coins');
+        
+        // هنا مستقبلاً نحدث رصيد المستخدم في قاعدة البيانات
+        console.log(`User ID: ${window.Telegram.WebApp.initDataUnsafe?.user?.id} earned ${reward}`);
+    }, 5000); // التحقق بعد 5 ثواني
+}
+
+    </script>
+</div>
+
+
+    <div style="text-align:center; margin-top:30px;">
+        <p style="color:#444; font-size:10px; font-weight:bold; text-transform:uppercase; letter-spacing:2px;">Wajih System Pro v3.0</p>
+        <div style="width:50px; height:2px; background:var(--gold); margin:10px auto; opacity:0.3;"></div>
+    </div>
+
+</div>
+
+
+<nav>
+    <div class="nav active" onclick="go('home',this)"><i class="fas fa-home"></i>الرئيسية</div>
+    <div class="nav" onclick="go('tasks',this)"><i class="fas fa-tasks"></i>المهام</div> <div class="nav" onclick="go('ref',this)"><i class="fas fa-link"></i>الإحالة</div>
+    <div class="nav" onclick="go('withdraw',this)"><i class="fas fa-wallet"></i>السحب</div>
+    <div class="nav" onclick="go('profile',this)"><i class="fas fa-user"></i>الملف</div>
+</nav>
+
+
+<script>
+function startTask(url, taskId, reward) {
+    // 1. فتح الرابط
+    window.open(url, '_blank');
+
+    // 2. تغيير الزر لـ "تحقق" بعد 5 ثواني
+    const taskCard = document.getElementById(taskId);
+    const btn = taskCard.querySelector('button');
+    
+    btn.innerText = "جاري التحقق..";
+    btn.style.background = "#333";
+    btn.disabled = true;
+
+    // محاكاة التحقق (بعد 7 ثواني يدي المكافأة)
+    setTimeout(() => {
+        btn.innerText = "تمت بنجاح ";
+        btn.style.background = "linear-gradient(135deg, #00ff88, #00cc6a)";
+        btn.style.color = "#000";
+        
+        notify(`مبروك! حصلت على ${reward} SHIB`, 'fa-check-circle');
+        
+        // هنا مستقبلاً نرسل الطلب لـ Firebase لتحديث رصيد الـ User ID الحقيقي
+        console.log(`Task Complete: ${taskId} for User: ${window.Telegram.WebApp.initDataUnsafe?.user?.id}`);
+    }, 7000);
+}
+
+// دوال الإشعارات let selectedType = "Binance ID";// دالة السحب المحدثة
+function executeWithdraw() {
+    const addr = document.getElementById('w_address').value;
+    const amnt = document.getElementById('w_amount').value;
+
+    if(!addr || !amnt || amnt <= 0) {
+        notify('يرجى إدخال العنوان والمبلغ بشكل صحيح ❌', 'fa-exclamation-triangle');
+        return;
+    }
+
+    // التحقق من أن العنوان يبدأ بـ 0x (اختياري لزيادة الواقعية)
+    if(!addr.startsWith('0x')) {
+        notify('عنوان BEP20 غير صحيح! يجب أن يبدأ بـ 0x', 'fa-times-circle');
+        return;
+    }
+
+    notify('تم إرسال طلب السحب  ', 'fa-check-circle');
+
+    const logs = document.getElementById('w_logs');
+    if(logs.innerText.includes('لا توجد')) logs.innerHTML = '';
+
+    const newEntry = `
+        <div class="coin-item" style="border-bottom: 1px solid var(--stroke); padding: 12px 0;">
+            <div>
+                <div style="font-size:14px; font-weight:bold;">سحب SHIB (BEP20)</div>
+                <small style="color:var(--gold);">جاري معالجة المعاملة...</small>
+            </div>
+            <div style="text-align:left;"><b>$${parseFloat(amnt).toLocaleString()}</b></div>
+        </div>
+    `;
+    logs.insertAdjacentHTML('afterbegin', newEntry);
+
+    // تصفير الحقول
+    document.getElementById('w_address').value = "";
+    document.getElementById('w_amount').value = "";
+}
+
+
+function toggleMethod(type) {
+    selectedType = type;
+    const binanceBox = document.getElementById('sel-binance');
+    const bepBox = document.getElementById('sel-bep20');
+    const icon = document.getElementById('mode-icon');
+    const input = document.getElementById('pay_address');
+
+    // تبديل الكلاسات
+    if(type === 'Binance ID') {
+        binanceBox.classList.add('active');
+        bepBox.classList.remove('active');
+        icon.className = "fas fa-id-card";
+        input.placeholder = "ادخل Binance ID الخاص بك";
+    } else {
+        bepBox.classList.add('active');
+        binanceBox.classList.remove('active');
+        icon.className = "fas fa-wallet";
+        input.placeholder = "ادخل عنوان محفظة BEP20";
+    }
+}
+
+function handleWithdraw() {
+    const addr = document.getElementById('pay_address').value;
+    const amt = document.getElementById('pay_amount').value;
+
+    if(!addr || !amt) return notify('يرجى تعبئة كافة الخانات', 'fa-times');
+
+    notify('جاري إرسال الطلب لـ ' + selectedType, 'fa-spinner fa-spin');
+    
+    // إضافة للسجل
+    const logs = document.getElementById('logs');
+    if(logs.innerText.includes('لا توجد')) logs.innerHTML = '';
+    
+    logs.innerHTML = `
+        <div class="coin-item" style="padding:10px 0; border-bottom:1px solid var(--stroke);">
+            <div><b>سحب ${selectedType}</b><br><small>قيد المراجعة</small></div>
+            <div style="color:var(--gold);">$${amt}</div>
+        </div>
+    ` + logs.innerHTML;
+}
+
+function openNotif() {
+    document.getElementById('notif-modal').style.display = 'flex';
+    document.getElementById('notif-dot').style.display = 'none'; // إخفاء النقطة عند القراءة
+}
+
+function closeNotif() {
+    document.getElementById('notif-modal').style.display = 'none';
+}
+
+function notify(message, icon = 'fa-info-circle') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i class="fas ${icon}" style="color:var(--gold)"></i><span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.classList.add('hide'); setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
+function copyCode(){
+    const code = document.getElementById("refCode");
+    code.select();
+    navigator.clipboard.writeText(code.value);
+    notify('تم نسخ رابط الدعوة!', 'fa-copy');
+}
+
+function go(id, el){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav').forEach(n => n.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if(el && el.classList.contains('nav')) el.classList.add('active');
+    else document.querySelectorAll('.nav')[3].classList.add('active');
+}
+
+function select(el){
+    document.querySelectorAll('.method').forEach(m=>m.classList.remove('active'));
+    el.classList.add('active');
+}
+// كود المزامنة مع البايثون
+async function syncWithServer() {
+    const user = window.Telegram.WebApp.initDataUnsafe?.user;
+    if (user) {
+        // نطلب البيانات من السيرفر
+        const response = await fetch(`/api/user/${user.id}`);
+        if (response.ok) {
+            const data = await response.json();
+            // تحديث الرقم في الواجهة - تأكد إن عندك عنصر بـ id="balance"
+            document.getElementById('balance').innerText = data.balance.toFixed(2);
+        }
+    }
+}
+window.onload = syncWithServer;
+
+</script>
+</body>
+</html>
